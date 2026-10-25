@@ -7,7 +7,7 @@ on:
 
 jobs:
   frontend:
-    name: Build and Lint
+    name: Build, Lint and Playwright
     runs-on: ubuntu-latest
 
     steps:
@@ -31,3 +31,18 @@ jobs:
 
       - name: Build Storybook
         run: npm run build-storybook
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
