@@ -46,3 +46,14 @@ jobs:
           path: playwright-report/
           retention-days: 7
           if-no-files-found: ignore
+      - name: Install backend dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: server
+        run: npx prisma generate
+
+      - name: Check backend TypeScript
+        working-directory: server
+        run: npm run typecheck
