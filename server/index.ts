@@ -7,11 +7,20 @@ import { sessionMiddleware } from "./session.js";
 import { requireAuth } from "./authMiddleware.js";
 
 const app = express();
-const PORT = 5000;
+
+const PORT = Number(process.env.PORT) || 5000;
+
+app.set("trust proxy", 1);
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.FRONTEND_URL,
+].filter((origin): origin is string => Boolean(origin));
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -423,12 +432,12 @@ app.post("/api/auth/logout", (req, res) => {
       });
     }
 
-    res.clearCookie("taskflow.sid", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    });
+  res.clearCookie("taskflow.sid", {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/",
+});
 
     return res.status(200).json({
       message: "Logged out successfully",
@@ -829,6 +838,6 @@ app.delete("/api/tasks/:id", async (req, res) => {
 });
 
 // Start backend
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`TaskForge backend running on port ${PORT}`);
 });

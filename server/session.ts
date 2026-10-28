@@ -6,9 +6,10 @@ import pg from "pg";
 
 const connectionString = process.env.DATABASE_URL;
 const sessionSecret = process.env.SESSION_SECRET;
+const isProduction = process.env.NODE_ENV === "production";
 
 if (!connectionString) {
-  throw new Error("DATABASE_URL is missing from .env");
+  throw new Error("DATABASE_URL is missing");
 }
 
 if (!sessionSecret || sessionSecret.length < 32) {
@@ -33,8 +34,9 @@ export const sessionMiddleware = session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 24 * 60 * 60 * 1000,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 1000 * 60 * 60 * 24,
+    path: "/",
   },
 });
