@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "hello.js",
-  "scripts": {
-    "dev": "tsx watch index.ts",
-    "typecheck": "tsc --noEmit",
-    "postinstall": "prisma skills sync || exit 0"
-  },
+  
+"scripts": {
+  "dev": "tsx watch index.ts",
+  "start": "tsx index.ts",
+  "build": "prisma generate",
+  "typecheck": "tsc --noEmit",
+  "postinstall": "prisma skills sync || exit 0"
+}
+
   "keywords": [],
   "author": "",
   "license": "ISC",
