@@ -1,5 +1,8 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
+
+const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 type LoginResponse = {
   message: string;
@@ -24,20 +27,24 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
+          email: email.trim(),
           password,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Invalid email or password");
+        const errorData = await response.json().catch(() => null);
+
+        throw new Error(
+          errorData?.message || `Login failed (${response.status})`
+        );
       }
 
       const data: LoginResponse = await response.json();
@@ -46,7 +53,11 @@ export default function Login() {
 
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      console.error("Login error:", err);
+
+      setError(
+        err instanceof Error ? err.message : "Unable to login"
+      );
     } finally {
       setLoading(false);
     }
@@ -56,7 +67,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
         <h1 className="mb-2 text-center text-3xl font-bold text-gray-900">
-          TaskFlow
+          TaskForge
         </h1>
 
         <p className="mb-8 text-center text-gray-500">
@@ -65,7 +76,10 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium">
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-medium"
+            >
               Email
             </label>
 
@@ -115,6 +129,7 @@ export default function Login() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
         <p className="mt-6 text-center text-sm text-gray-600">
           Don't have an account?{" "}
           <Link
