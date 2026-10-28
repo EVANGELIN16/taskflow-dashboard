@@ -1,6 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import DashboardLayout from "./layout/DashboardLayout";
+
+const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 export default function ProtectedRoute() {
   const [status, setStatus] = useState<
@@ -12,16 +15,20 @@ export default function ProtectedRoute() {
 
     async function checkAuthentication() {
       try {
-        const response = await fetch("http://localhost:5000/api/auth/me", {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          method: "GET",
           credentials: "include",
           signal: controller.signal,
         });
 
         if (!controller.signal.aborted) {
-          setStatus(response.ok ? "authenticated" : "unauthenticated");
+          setStatus(
+            response.ok ? "authenticated" : "unauthenticated"
+          );
         }
-      } catch {
+      } catch (error) {
         if (!controller.signal.aborted) {
+          console.error("Authentication check failed:", error);
           setStatus("unauthenticated");
         }
       }
@@ -29,7 +36,9 @@ export default function ProtectedRoute() {
 
     void checkAuthentication();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   if (status === "loading") {

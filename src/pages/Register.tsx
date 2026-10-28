@@ -1,5 +1,8 @@
+
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
+const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 type RegisterResponse = {
   message: string;
@@ -37,14 +40,15 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: name.trim(),
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
           password,
         }),
       });
@@ -56,10 +60,13 @@ export default function Register() {
       }
 
       // Registration creates an account but does not log the user in.
-      // Redirect to the login page.
       navigate("/login", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      console.error("Registration error:", err);
+
+      setError(
+        err instanceof Error ? err.message : "Registration failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -69,14 +76,19 @@ export default function Register() {
     <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4 py-8">
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
         <h1 className="mb-2 text-center text-3xl font-bold text-gray-900">
-          TaskFlow
+          TaskForge
         </h1>
 
-        <p className="mb-8 text-center text-gray-500">Create your account</p>
+        <p className="mb-8 text-center text-gray-500">
+          Create your account
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="name" className="mb-2 block text-sm font-medium">
+            <label
+              htmlFor="name"
+              className="mb-2 block text-sm font-medium"
+            >
               Full Name
             </label>
 
@@ -93,7 +105,10 @@ export default function Register() {
           </div>
 
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium">
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-medium"
+            >
               Email
             </label>
 

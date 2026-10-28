@@ -37,3 +37,11 @@ test-results/
 *.njsproj
 *.sln
 *.sw?
+# Docker image archives
+*.tar
+*.tar.gz
+
+# Production secrets
+.env
+.env.*
+!.env.example

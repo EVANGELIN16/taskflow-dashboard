@@ -20,13 +20,14 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://taskflow-dashboard-eight-rouge.vercel.app",
+    ],
     credentials: true,
   })
 );
-
-app.use(express.json());
-app.use(sessionMiddleware);
 
 type ProjectStatus = "Planning" | "In Progress" | "Completed";
 

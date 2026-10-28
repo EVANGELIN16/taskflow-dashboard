@@ -1,23 +1,38 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-import type { Project, ProjectInput } from "../types/project";
+import {
+  createApi,
+  fetchBaseQuery,
+} from "@reduxjs/toolkit/query/react";
+
+import type {
+  Project,
+  ProjectInput,
+} from "../types/project";
+
+// Render backend URL in production.
+// Locally, requests continue through the Vite proxy.
+const API_URL = (
+  import.meta.env.VITE_API_URL || ""
+).replace(/\/$/, "");
 
 export const projectApi = createApi({
   reducerPath: "projectApi",
 
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:5000/api/",
+    baseUrl: `${API_URL}/api/`,
     credentials: "include",
   }),
 
   tagTypes: ["Projects"],
 
   endpoints: (builder) => ({
+    // GET all projects belonging to the logged-in user
     getProjects: builder.query<Project[], void>({
       query: () => "projects",
       providesTags: ["Projects"],
     }),
 
+    // POST create a project
     addProject: builder.mutation<Project, ProjectInput>({
       query: (project) => ({
         url: "projects",
@@ -27,6 +42,7 @@ export const projectApi = createApi({
       invalidatesTags: ["Projects"],
     }),
 
+    // PUT update an existing project
     updateProject: builder.mutation<Project, Project>({
       query: (project) => ({
         url: `projects/${project.id}`,
@@ -39,6 +55,7 @@ export const projectApi = createApi({
       invalidatesTags: ["Projects"],
     }),
 
+    // DELETE a project
     deleteProject: builder.mutation<void, number>({
       query: (id) => ({
         url: `projects/${id}`,

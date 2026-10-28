@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -16,6 +17,10 @@ import {
 import Card from "../components/ui/Card";
 import { useGetProjectsQuery } from "../services/projectApi";
 import { useGetTasksQuery } from "../services/taskApi";
+
+// Render backend URL in production.
+// Empty string allows local requests to use the Vite proxy.
+const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 type CurrentUser = {
   id: number;
@@ -56,15 +61,18 @@ function Dashboard() {
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchCurrentUser = async () => {
+    async function fetchCurrentUser() {
       try {
-        const response = await fetch("http://localhost:5000/api/auth/me", {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          method: "GET",
           credentials: "include",
           signal: controller.signal,
         });
 
         if (response.status === 401) {
-          navigate("/login", { replace: true });
+          if (!controller.signal.aborted) {
+            navigate("/login", { replace: true });
+          }
           return;
         }
 
@@ -83,14 +91,14 @@ function Dashboard() {
         setAuthError(
           error instanceof Error
             ? error.message
-            : "Unable to load user information",
+            : "Unable to load user information"
         );
       } finally {
         if (!controller.signal.aborted) {
           setUserLoading(false);
         }
       }
-    };
+    }
 
     void fetchCurrentUser();
 
@@ -103,7 +111,7 @@ function Dashboard() {
     setAuthError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/logout", {
+      const response = await fetch(`${API_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
@@ -112,10 +120,12 @@ function Dashboard() {
         throw new Error("Logout failed. Please try again.");
       }
 
-      // Clear cached user-specific data through a full reload.
+      // Full reload clears user-specific cached data.
       window.location.replace("/login");
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Logout failed");
+      setAuthError(
+        error instanceof Error ? error.message : "Logout failed"
+      );
       setLoggingOut(false);
     }
   };
@@ -130,28 +140,33 @@ function Dashboard() {
     },
     {
       title: "Planning",
-      value: projects.filter((project) => project.status === "Planning").length,
+      value: projects.filter(
+        (project) => project.status === "Planning"
+      ).length,
       icon: ListTodo,
       color: "text-amber-600",
     },
     {
       title: "In Progress",
-      value: projects.filter((project) => project.status === "In Progress")
-        .length,
+      value: projects.filter(
+        (project) => project.status === "In Progress"
+      ).length,
       icon: Activity,
       color: "text-blue-600",
     },
     {
       title: "Completed",
-      value: projects.filter((project) => project.status === "Completed")
-        .length,
+      value: projects.filter(
+        (project) => project.status === "Completed"
+      ).length,
       icon: CheckCircle2,
       color: "text-green-600",
     },
   ];
 
-  // Today's date (local calendar day)
+  // Today's date in local calendar format
   const today = new Date();
+
   const todayString = [
     today.getFullYear(),
     String(today.getMonth() + 1).padStart(2, "0"),
@@ -159,15 +174,19 @@ function Dashboard() {
   ].join("-");
 
   // Task statistics
-  const completedTasks = tasks.filter((task) => task.status === "Completed");
+  const completedTasks = tasks.filter(
+    (task) => task.status === "Completed"
+  );
 
-  const inProgressTasks = tasks.filter((task) => task.status === "In Progress");
+  const inProgressTasks = tasks.filter(
+    (task) => task.status === "In Progress"
+  );
 
   const overdueTasks = tasks.filter(
     (task) =>
       task.status !== "Completed" &&
-      task.dueDate !== null &&
-      task.dueDate.slice(0, 10) < todayString,
+      task.dueDate != null &&
+      task.dueDate.slice(0, 10) < todayString
   );
 
   const taskStats = [
@@ -202,14 +221,20 @@ function Dashboard() {
     .filter(
       (task) =>
         task.status !== "Completed" &&
-        task.dueDate !== null &&
-        task.dueDate.slice(0, 10) >= todayString,
+        task.dueDate != null &&
+        task.dueDate.slice(0, 10) >= todayString
     )
-    .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? ""))
+    .sort((a, b) =>
+      (a.dueDate ?? "").localeCompare(b.dueDate ?? "")
+    )
     .slice(0, 5);
 
   if (projectsLoading || tasksLoading || userLoading) {
-    return <p role="status">Loading dashboard...</p>;
+    return (
+      <div role="status" className="p-8 text-center">
+        Loading dashboard...
+      </div>
+    );
   }
 
   if (projectsError || tasksError) {
@@ -238,7 +263,9 @@ function Dashboard() {
       {/* Dashboard heading and user profile */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+          <h1 className="text-3xl font-bold">
+            Dashboard Overview
+          </h1>
 
           <p className="mt-2 text-text-secondary">
             Live project and task information from your Node.js API.
@@ -247,7 +274,10 @@ function Dashboard() {
 
         <div className="flex items-center gap-4 rounded-xl border border-border bg-white p-4">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100">
-            <UserRound className="text-blue-600" size={22} />
+            <UserRound
+              className="text-blue-600"
+              size={22}
+            />
           </div>
 
           <div className="min-w-0">
@@ -280,7 +310,9 @@ function Dashboard() {
 
       {/* Project statistics */}
       <section className="space-y-4">
-        <h2 className="text-xl font-bold">Project Statistics</h2>
+        <h2 className="text-xl font-bold">
+          Project Statistics
+        </h2>
 
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {projectStats.map((stat) => {
@@ -289,12 +321,19 @@ function Dashboard() {
             return (
               <Card key={stat.title}>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-text-secondary">{stat.title}</p>
+                  <p className="text-sm text-text-secondary">
+                    {stat.title}
+                  </p>
 
-                  <Icon size={22} className={stat.color} />
+                  <Icon
+                    size={22}
+                    className={stat.color}
+                  />
                 </div>
 
-                <h3 className="mt-4 text-3xl font-bold">{stat.value}</h3>
+                <h3 className="mt-4 text-3xl font-bold">
+                  {stat.value}
+                </h3>
               </Card>
             );
           })}
@@ -303,7 +342,9 @@ function Dashboard() {
 
       {/* Task statistics */}
       <section className="space-y-4">
-        <h2 className="text-xl font-bold">Task Statistics</h2>
+        <h2 className="text-xl font-bold">
+          Task Statistics
+        </h2>
 
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {taskStats.map((stat) => {
@@ -312,12 +353,19 @@ function Dashboard() {
             return (
               <Card key={stat.title}>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-text-secondary">{stat.title}</p>
+                  <p className="text-sm text-text-secondary">
+                    {stat.title}
+                  </p>
 
-                  <Icon size={22} className={stat.color} />
+                  <Icon
+                    size={22}
+                    className={stat.color}
+                  />
                 </div>
 
-                <h3 className="mt-4 text-3xl font-bold">{stat.value}</h3>
+                <h3 className="mt-4 text-3xl font-bold">
+                  {stat.value}
+                </h3>
               </Card>
             );
           })}
@@ -327,7 +375,9 @@ function Dashboard() {
       {/* Recent projects */}
       <Card title="Recent Projects">
         {projects.length === 0 ? (
-          <p className="text-text-secondary">No projects available.</p>
+          <p className="text-text-secondary">
+            No projects available.
+          </p>
         ) : (
           <div className="space-y-3">
             {projects
@@ -338,7 +388,9 @@ function Dashboard() {
                   key={project.id}
                   className="flex items-center justify-between gap-3 rounded-lg border border-border p-4"
                 >
-                  <h3 className="break-words font-semibold">{project.name}</h3>
+                  <h3 className="break-words font-semibold">
+                    {project.name}
+                  </h3>
 
                   <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-600">
                     {project.status}
@@ -352,7 +404,9 @@ function Dashboard() {
       {/* Upcoming deadlines */}
       <Card title="Upcoming Deadlines">
         {upcomingTasks.length === 0 ? (
-          <p className="text-text-secondary">No upcoming task deadlines.</p>
+          <p className="text-text-secondary">
+            No upcoming task deadlines.
+          </p>
         ) : (
           <div className="space-y-3">
             {upcomingTasks.map((task) => (
@@ -361,7 +415,9 @@ function Dashboard() {
                 className="flex flex-col justify-between gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center"
               >
                 <div>
-                  <h3 className="font-semibold">{task.title}</h3>
+                  <h3 className="font-semibold">
+                    {task.title}
+                  </h3>
 
                   <p className="mt-1 text-sm text-text-secondary">
                     Project: {task.project.name}
@@ -375,7 +431,9 @@ function Dashboard() {
                 <div className="flex items-center gap-2 text-sm text-amber-700">
                   <CalendarDays size={17} />
 
-                  <span>Due: {task.dueDate?.slice(0, 10)}</span>
+                  <span>
+                    Due: {task.dueDate?.slice(0, 10)}
+                  </span>
                 </div>
               </div>
             ))}

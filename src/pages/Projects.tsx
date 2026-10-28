@@ -1,3 +1,4 @@
+
 import { useState, type FormEvent } from "react";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
@@ -14,7 +15,11 @@ import {
 
 import type { Project, ProjectStatus } from "../types/project";
 
-const statuses: ProjectStatus[] = ["Planning", "In Progress", "Completed"];
+const statuses: ProjectStatus[] = [
+  "Planning",
+  "In Progress",
+  "Completed",
+];
 
 function Projects() {
   const {
@@ -24,15 +29,22 @@ function Projects() {
     refetch,
   } = useGetProjectsQuery();
 
-  const [addProject, { isLoading: isAdding }] = useAddProjectMutation();
+  const [addProject, { isLoading: isAdding }] =
+    useAddProjectMutation();
 
-  const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
+  const [updateProject, { isLoading: isUpdating }] =
+    useUpdateProjectMutation();
 
-  const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
+  const [deleteProject, { isLoading: isDeleting }] =
+    useDeleteProjectMutation();
 
   const [name, setName] = useState("");
-  const [status, setStatus] = useState<ProjectStatus>("Planning");
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [status, setStatus] =
+    useState<ProjectStatus>("Planning");
+
+  const [editingId, setEditingId] =
+    useState<number | null>(null);
+
   const [error, setError] = useState("");
 
   const isSaving = isAdding || isUpdating;
@@ -45,8 +57,11 @@ function Projects() {
     setError("");
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
+    setError("");
 
     const trimmedName = name.trim();
 
@@ -70,8 +85,12 @@ function Projects() {
       }
 
       resetForm();
-    } catch {
-      setError("Unable to save project. Please try again.");
+    } catch (err) {
+      console.error("Failed to save project:", err);
+
+      setError(
+        "Unable to save project. Please try again."
+      );
     }
   };
 
@@ -80,33 +99,61 @@ function Projects() {
     setName(project.name);
     setStatus(project.status);
     setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this project?")) return;
+    if (!window.confirm("Delete this project?")) {
+      return;
+    }
 
     try {
       await deleteProject(id).unwrap();
 
-      if (editingId === id) resetForm();
+      if (editingId === id) {
+        resetForm();
+      }
+
       setError("");
-    } catch {
-      setError("Unable to delete project. Please try again.");
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+
+      setError(
+        "Unable to delete project. Please try again."
+      );
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Page heading */}
       <div>
-        <h1 className="text-3xl font-bold">Projects</h1>
+        <h1 className="text-3xl font-bold">
+          Projects
+        </h1>
+
         <p className="mt-2 text-text-secondary">
-          Manage your projects through the TaskFlow API.
+          Create, manage, and track your projects
+          using the TaskForge API.
         </p>
       </div>
 
-      <Card title={editingId !== null ? "Edit Project" : "Create Project"}>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Create / Edit Project */}
+      <Card
+        title={
+          editingId !== null
+            ? "Edit Project"
+            : "Create Project"
+        }
+      >
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
           <Input
             label="Project Name"
             value={name}
@@ -129,11 +176,18 @@ function Projects() {
             <select
               id="project-status"
               value={status}
-              onChange={(e) => setStatus(e.target.value as ProjectStatus)}
+              onChange={(e) =>
+                setStatus(
+                  e.target.value as ProjectStatus
+                )
+              }
               className="w-full rounded-lg border border-border bg-white p-3"
             >
               {statuses.map((item) => (
-                <option key={item} value={item}>
+                <option
+                  key={item}
+                  value={item}
+                >
                   {item}
                 </option>
               ))}
@@ -141,8 +195,12 @@ function Projects() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button type="submit" disabled={isBusy}>
+            <Button
+              type="submit"
+              disabled={isBusy}
+            >
               <Plus size={18} />
+
               {isSaving
                 ? "Saving..."
                 : editingId !== null
@@ -150,25 +208,47 @@ function Projects() {
                   : "Add Project"}
             </Button>
 
-            <Button variant="secondary" onClick={resetForm} disabled={isBusy}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={resetForm}
+              disabled={isBusy}
+            >
               Cancel
             </Button>
           </div>
         </form>
       </Card>
 
+      {/* Loading state */}
       {isLoading ? (
-        <p role="status">Loading projects...</p>
+        <p role="status">
+          Loading projects...
+        </p>
       ) : isError ? (
+        /* Error state */
         <Card>
-          <p role="alert" className="text-danger">
-            Unable to fetch projects. Check your backend server.
+          <p
+            role="alert"
+            className="text-danger"
+          >
+            Unable to fetch projects.
+            Please check your connection to
+            the TaskForge backend.
           </p>
+
           <div className="mt-4">
-            <Button onClick={() => refetch()}>Retry</Button>
+            <Button
+              onClick={() => {
+                void refetch();
+              }}
+            >
+              Retry
+            </Button>
           </div>
         </Card>
       ) : (
+        /* Project list */
         <div>
           <h2 className="mb-4 text-xl font-semibold">
             All Projects ({projects.length})
@@ -177,7 +257,8 @@ function Projects() {
           {projects.length === 0 ? (
             <Card>
               <p className="text-text-secondary">
-                No projects yet. Create your first project.
+                No projects yet. Create your
+                first project.
               </p>
             </Card>
           ) : (
@@ -197,7 +278,9 @@ function Projects() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => handleEdit(project)}
+                        onClick={() =>
+                          handleEdit(project)
+                        }
                         disabled={isBusy}
                       >
                         <Pencil size={16} />
@@ -207,7 +290,9 @@ function Projects() {
                       <Button
                         size="sm"
                         variant="danger"
-                        onClick={() => handleDelete(project.id)}
+                        onClick={() =>
+                          void handleDelete(project.id)
+                        }
                         disabled={isBusy}
                       >
                         <Trash2 size={16} />
