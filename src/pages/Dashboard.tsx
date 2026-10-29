@@ -20,8 +20,7 @@ import { useGetTasksQuery } from "../services/taskApi";
 
 // Render backend URL in production.
 // Empty string allows local requests to use the Vite proxy.
-const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
-
+const API_URL = "";
 type CurrentUser = {
   id: number;
   name: string;

@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import DashboardLayout from "./layout/DashboardLayout";
 
-const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
-
+const API_URL = "";
 export default function ProtectedRoute() {
   const [status, setStatus] = useState<
     "loading" | "authenticated" | "unauthenticated"

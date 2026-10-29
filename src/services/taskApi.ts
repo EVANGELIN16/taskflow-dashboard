@@ -12,9 +12,7 @@ import type {
 
 // Production: Render backend URL from Vercel environment variable
 // Development: Use the local Vite proxy
-const API_URL = (
-  import.meta.env.VITE_API_URL || ""
-).replace(/\/$/, "");
+const API_URL = "";
 
 export const taskApi = createApi({
   reducerPath: "taskApi",

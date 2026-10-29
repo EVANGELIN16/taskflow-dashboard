@@ -2,7 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
 
-const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const API_URL = "";
 
 type LoginResponse = {
   message: string;

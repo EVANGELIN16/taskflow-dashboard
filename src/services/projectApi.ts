@@ -11,9 +11,7 @@ import type {
 
 // Render backend URL in production.
 // Locally, requests continue through the Vite proxy.
-const API_URL = (
-  import.meta.env.VITE_API_URL || ""
-).replace(/\/$/, "");
+const API_URL = "";
 
 export const projectApi = createApi({
   reducerPath: "projectApi",
