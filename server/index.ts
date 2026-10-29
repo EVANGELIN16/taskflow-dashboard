@@ -28,6 +28,8 @@ app.use(
     credentials: true,
   })
 );
+app.use(express.json());
+app.use(sessionMiddleware);
 
 type ProjectStatus = "Planning" | "In Progress" | "Completed";
 
