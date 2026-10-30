@@ -4,6 +4,12 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pg from "pg";
 
+declare module "express-session" {
+  interface SessionData {
+    userId?: number;
+  }
+}
+
 const connectionString = process.env.DATABASE_URL;
 const sessionSecret = process.env.SESSION_SECRET;
 const isProduction = process.env.NODE_ENV === "production";

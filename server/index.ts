@@ -5,6 +5,30 @@ import { prisma } from "./db.js";
 import bcrypt from "bcrypt";
 import { sessionMiddleware } from "./session.js";
 import { requireAuth } from "./authMiddleware.js";
+import multer from "multer";
+import { cloudinary } from "./cloudinary.js";
+import { fileTypeFromBuffer } from "file-type";
+
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+  fileFilter: (_req, file, callback) => {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.mimetype)) {
+      return callback(new Error("Only JPG, PNG and WebP images are allowed"));
+    }
+
+    callback(null, true);
+  },
+});
 
 const app = express();
 
@@ -18,16 +42,14 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter((origin): origin is string => Boolean(origin));
 
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://taskflow-dashboard-eight-rouge.vercel.app",
-    ],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(sessionMiddleware);
 
@@ -385,6 +407,127 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+
+
+app.post(
+  "/api/auth/profile-image",
+  requireAuth,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+
+      if (!req.file) {
+        return res.status(400).json({
+          message: "Please select an image",
+        });
+      }
+
+      const detectedType = await fileTypeFromBuffer(req.file.buffer);
+
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ];
+
+      if (!detectedType || !allowedTypes.includes(detectedType.mime)) {
+        return res.status(400).json({
+          message: "Only JPG, PNG and WebP images are allowed",
+        });
+      }
+
+      const imageUrl = await new Promise<string>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "taskforge/profile-images",
+            resource_type: "image",
+            public_id: `user-${userId}`,
+            overwrite: true,
+            invalidate: true,
+          },
+          (error, result) => {
+            if (error || !result) {
+              reject(error ?? new Error("Image upload failed"));
+              return;
+            }
+
+            resolve(result.secure_url);
+          }
+        );
+
+        stream.end(req.file!.buffer);
+      });
+
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: { profileImage: imageUrl },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          profileImage: true,
+        },
+      });
+
+      return res.status(200).json({
+        message: "Profile picture updated successfully",
+        user,
+      });
+    } catch (error) {
+      console.error("Profile picture upload error:", error);
+
+      return res.status(500).json({
+        message: "Unable to upload profile picture",
+      });
+    }
+  }
+);
+
+ // UPDATE USER PROFILE
+app.put("/api/auth/profile", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId!;
+    const { name } = req.body ?? {};
+
+    if (typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({
+        message: "Full name is required",
+      });
+    }
+
+    const trimmedName = name.trim();
+
+    if (trimmedName.length > 100) {
+      return res.status(400).json({
+        message: "Full name must be 100 characters or fewer",
+      });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { name: trimmedName },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profileImage: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+
+    return res.status(500).json({
+      message: "Unable to update profile",
+    });
+  }
+});
+
 // CHECK CURRENT USER
 app.get("/api/auth/me", async (req, res) => {
   try {
@@ -396,14 +539,17 @@ app.get("/api/auth/me", async (req, res) => {
       });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
-    });
+   
+const user = await prisma.user.findUnique({
+  where: { id: userId },
+  select: {
+    id: true,
+    name: true,
+    email: true,
+    profileImage: true,
+  },
+});
+
 
     if (!user) {
       return res.status(401).json({

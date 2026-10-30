@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
@@ -8,7 +9,10 @@ function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       <div className="min-h-screen md:ml-64">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
